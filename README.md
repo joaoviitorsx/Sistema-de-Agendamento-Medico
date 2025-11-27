@@ -271,18 +271,6 @@ Implementação de um worker concorrente usando thread dedicada.
 - Arquitetura MVC deixa o sistema claro e sustentável.
 - Uso explícito de estruturas de sincronização (`Queue`, `RLock`).
 
----
-
-## 📝 Possíveis Extensões Futuras
-
-- Dashboard React com visualização da agenda.
-- Notificações live usando SSE.
-- Autenticação JWT.
-- Logs avançados com filtros.
-- Sistema híbrido JSON + SQLite.
-
----
-
 ## ✔️ Conclusão
 
 Este backend:
