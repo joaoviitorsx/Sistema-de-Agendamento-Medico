@@ -1,0 +1,52 @@
+# Node.js / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.next/
+frontend/.turbo/
+frontend/.cache/
+frontend/.vite/
+frontend/coverage/
+frontend/yarn.lock
+frontend/package-lock.json
+
+# Python / Backend
+backend/.venv/
+backend/venv/
+backend/__pycache__/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.pylint.d/
+backend/.env
+backend/.env.local
+backend/.DS_Store
+backend/.coverage
+backend/.cache/
+backend/.vscode/
+backend/.idea/
+backend/.ruff_cache/
+
+# FastAPI/Logs/Reports/Temp
+backend/app/logs/
+backend/app/reports/
+backend/app/temp/
+backend/app/__pycache__/
+backend/app/banco/*.json
+
+# VSCode/IDE
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# General
+*.pyc
+*.pyo
+*.log
+*.bak
+*.tmp
+*.orig
