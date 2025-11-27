@@ -1,4 +1,6 @@
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 
 from app.controllers import consulta_controller, medico_controller, paciente_controller, sistema_controller, backup_controller, report_controller
@@ -17,6 +19,15 @@ app = FastAPI(
         "API para agendamento de consultas médicas, "
         "projeto para demonstrar conceitos de Sistemas Operacionais."
     ),
+)
+
+# Adiciona o middleware CORS após a criação do app
+app.add_middleware(
+     CORSMiddleware,
+     allow_origins=["*"],  # Ou especifique ["http://localhost:5173"] para mais segurança
+     allow_credentials=True,
+     allow_methods=["*"],
+     allow_headers=["*"],
 )
 
 #rotas
