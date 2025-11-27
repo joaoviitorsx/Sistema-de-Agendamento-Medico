@@ -300,5 +300,3 @@ Este backend:
 Desenvolvido por **João Vitor**  
 Disciplina: Sistemas Operacionais  
 Curso: Engenharia da Computação
-#   S O - - - S i s t e m a - d e - A g e n d a m e n t o  
- 
