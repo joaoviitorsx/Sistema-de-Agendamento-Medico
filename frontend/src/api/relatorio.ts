@@ -2,7 +2,7 @@ import { api } from "./axios";
 
 export const RelatoriosAPI = {
   gerar: async (filtros: Record<string, unknown>) => {
-    const { data } = await api.post("/tasks/relatorio", filtros);
+    const { data } = await api.post("/relatorios/gerar", filtros);
     return data;
   },
 

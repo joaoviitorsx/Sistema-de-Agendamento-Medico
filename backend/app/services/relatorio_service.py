@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from ..core.config import settings
 from ..repositories.consulta_repository import ConsultaRepository
+from ..repositories.medico_repository import MedicoRepository
 import logging
 import os
 
@@ -50,36 +51,58 @@ class RelatorioService:
 
     def gerar_relatorio(self, filtros: dict) -> str:
         repo = ConsultaRepository()
+        medico_repo = MedicoRepository()
         consultas = repo.list_all()
 
         medico_id = filtros.get("medico_id")
-        periodo = filtros.get("periodo")
+        periodo_inicio = filtros.get("periodo_inicio")
+        periodo_fim = filtros.get("periodo_fim")
 
+        medico_nome = "Todos"
         if medico_id:
             consultas = [c for c in consultas if c.medico_id == medico_id]
+            medico = medico_repo.get_by_id(medico_id)
+            if medico:
+                medico_nome = medico.nome
 
-        if periodo == "hoje":
-            hoje = datetime.now().date()
-            consultas = [
-                c for c in consultas
-                if c.inicio.date() == hoje
-            ]
+        if periodo_inicio and periodo_fim:
+            try:
+                dt_inicio = datetime.fromisoformat(periodo_inicio)
+                dt_fim = datetime.fromisoformat(periodo_fim)
+                consultas = [c for c in consultas if c.inicio >= dt_inicio and c.fim <= dt_fim]
+            except Exception as e:
+                logger.warning(f"Período inválido: {e}")
 
         pdf = PDFRelatorio()
         pdf.add_page()
+
+        # Cabeçalho customizado
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 10, f"Médico: {medico_nome}", ln=True)
+        if periodo_inicio and periodo_fim:
+            pdf.set_font("Arial", "", 12)
+            pdf.cell(0, 8, f"Período: {periodo_inicio[:10]} até {periodo_fim[:10]}", ln=True)
+        pdf.ln(4)
 
         # Cabeçalho da tabela
         pdf.set_font("Arial", "B", 12)
         pdf.set_fill_color(230, 230, 230)
         pdf.cell(40, 10, "Início", fill=True)
         pdf.cell(40, 10, "Fim", fill=True)
-        pdf.cell(40, 10, "Médico", fill=True)
         pdf.cell(60, 10, "Paciente", fill=True)
+        pdf.cell(40, 10, "Status", fill=True)
         pdf.ln(12)
 
         # Linhas da tabela
         for c in consultas:
-            pdf.add_consulta_row(c)
+            pdf.set_font("Arial", "", 12)
+            inicio = c.inicio.strftime("%d/%m/%Y %H:%M")
+            fim = c.fim.strftime("%d/%m/%Y %H:%M")
+            pdf.cell(40, 8, inicio)
+            pdf.cell(40, 8, fim)
+            pdf.cell(60, 8, str(c.paciente_id))
+            pdf.cell(40, 8, c.status)
+            pdf.ln(8)
 
         destino = self.reports_dir / f"relatorio_{datetime.utcnow().timestamp()}.pdf"
         pdf.output(str(destino))

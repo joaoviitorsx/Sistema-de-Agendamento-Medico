@@ -104,7 +104,7 @@ export default function MainLayout() {
           <Avatar style={{ background: "#1890ff" }} icon={<UserOutlined />} />
         </Header>
 
-        <Content style={{ padding: 32, background: "#f5f7fa" }}>
+        <Content style={{ padding: 32, background: "#e7e9ecff" }}>
           <div
             style={{
               background: "#fff",

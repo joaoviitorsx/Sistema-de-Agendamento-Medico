@@ -5,7 +5,7 @@ import asyncio
 from ..services.log_service import LogService
 from ..infra.sse import sse_broker
 
-router = APIRouter(prefix="/sistema", tags=["Sistema"])
+router = APIRouter(tags=["Sistema"])
 
 log_service = LogService()
 
@@ -19,7 +19,7 @@ async def obter_logs():
 @router.get("/logs/stream")
 async def stream_logs():
     async def event_stream():
-        queue = sse_broker.subscribe()
+        queue = sse_broker.add_subscriber()
         try:
             while True:
                 msg = await queue.get()
@@ -27,7 +27,7 @@ async def stream_logs():
         except asyncio.CancelledError:
             pass
         finally:
-            sse_broker.unsubscribe(queue)
+            sse_broker.remove_subscriber(queue)
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 

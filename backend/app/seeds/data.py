@@ -1,3 +1,65 @@
+from ..repositories.horario_repository import HorarioRepository
+from ..models.horario_model import Horario
+from ..repositories.consulta_repository import ConsultaRepository
+from ..models.consulta_model import Consulta
+
+async def seed_initial_horarios():
+    repo = HorarioRepository()
+    existentes = repo.list_all()
+    if existentes:
+        logger.info("Seed: horários já existentes, ignorando.")
+        return
+
+    # Exemplo: cria um horário para cada médico existente
+    from ..repositories.medico_repository import MedicoRepository
+    medicos = MedicoRepository().list_all()
+    horarios = []
+    dias = ["segunda", "terca", "quarta"]
+    for idx, medico in enumerate(medicos):
+        for i, dia in enumerate(dias):
+            horario = Horario(
+                id=str(uuid4()),
+                medico_id=medico.id,
+                dia_semana=dia,
+                hora_inicio=f"0{8+i}:00",
+                hora_fim=f"1{0+i}:00"
+            )
+            horarios.append(horario)
+    for h in horarios:
+        repo.save(h)
+    logger.info("Horários iniciais criados.")
+
+# Seed para consultas
+async def seed_initial_consultas():
+    repo = ConsultaRepository()
+    existentes = repo.list_all()
+    if existentes:
+        logger.info("Seed: consultas já existentes, ignorando.")
+        return
+
+    from ..repositories.paciente_repository import PacienteRepository
+    from ..repositories.medico_repository import MedicoRepository
+    pacientes = PacienteRepository().list_all()
+    medicos = MedicoRepository().list_all()
+    now = datetime.utcnow()
+    consultas = []
+    if pacientes and medicos:
+        consultas.append(
+            Consulta(
+                id=str(uuid4()),
+                paciente_id=pacientes[0].id,
+                medico_id=medicos[0].id,
+                inicio=now,
+                fim=now,
+                status="agendada",
+                observacoes="Primeira consulta",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+    if consultas:
+        repo.storage.save_all([repo._serialize(c) for c in consultas])
+        logger.info("Consultas iniciais criadas.")
 import asyncio
 from datetime import datetime, date
 from uuid import uuid4

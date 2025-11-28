@@ -3,11 +3,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from app.controllers import consulta_controller, medico_controller, paciente_controller, sistema_controller, backup_controller, report_controller
+from app.controllers import consulta_controller, medico_controller, paciente_controller, sistema_controller, backup_controller, report_controller, horario_controller
 from app.infra import task_queue
 
 from .core.log import configure_logging
-from .seeds.data import seed_initial_data, seed_initial_medicos, seed_initial_medicos
+from .seeds.data import seed_initial_data, seed_initial_medicos, seed_initial_horarios
 
 # configura logging logo no início
 configure_logging()
@@ -37,6 +37,9 @@ app.include_router(consulta_controller.router, prefix="/consultas", tags=["Consu
 app.include_router(sistema_controller.router, prefix="/sistema", tags=["Sistema"])
 app.include_router(report_controller.router, prefix="/relatorios", tags=["Relatórios"])
 app.include_router(backup_controller.router, prefix="/backup", tags=["Backup"])
+app.include_router(horario_controller.router, prefix="/horarios", tags=["Horários"])
+
+from .seeds.data import seed_initial_consultas
 
 @app.on_event("startup")
 async def on_startup():
@@ -45,6 +48,8 @@ async def on_startup():
     # cria dados iniciais
     await seed_initial_data()
     await seed_initial_medicos()
+    await seed_initial_horarios()
+    await seed_initial_consultas()
     
 @app.on_event("shutdown")
 async def on_shutdown():

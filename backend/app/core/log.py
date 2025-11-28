@@ -4,7 +4,9 @@ from pathlib import Path
 from queue import Queue
 from typing import Optional
 
+
 from ..core.config import settings
+from ..infra.sse import sse_broker
 
 # FILA GLOBAL DE LOG PARA STREAMING NO FRONTEND
 LOG_QUEUE: "Queue[str]" = Queue(maxsize=5000)
@@ -19,6 +21,15 @@ class QueueLogHandler(logging.Handler):
         try:
             msg = self.format(record)
             LOG_QUEUE.put(msg)
+            # Publica no broker SSE para streaming em tempo real
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+                # Se já houver loop rodando, cria task
+                loop.create_task(sse_broker.publish(msg))
+            except RuntimeError:
+                # Se não houver loop, ignora (ex: log fora do contexto async)
+                pass
         except Exception:
             pass  # nunca quebra o sistema
 

@@ -11,6 +11,7 @@ relatorio_service = RelatorioService()
 
 @router.post("/gerar")
 async def gerar(payload: dict):
+    # Espera: { medico_id: str, periodo_inicio: str, periodo_fim: str }
     task_id = task_service.enqueue_relatorio(payload)
     return {"status": "processando", "task_id": task_id}
 
