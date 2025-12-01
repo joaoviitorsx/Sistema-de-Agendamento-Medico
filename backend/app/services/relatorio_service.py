@@ -4,6 +4,7 @@ from pathlib import Path
 from ..core.config import settings
 from ..repositories.consulta_repository import ConsultaRepository
 from ..repositories.medico_repository import MedicoRepository
+from ..repositories.paciente_repository import PacienteRepository
 import logging
 import os
 
@@ -52,6 +53,7 @@ class RelatorioService:
     def gerar_relatorio(self, filtros: dict) -> str:
         repo = ConsultaRepository()
         medico_repo = MedicoRepository()
+        paciente_repo = PacienteRepository()
         consultas = repo.list_all()
 
         medico_id = filtros.get("medico_id")
@@ -98,9 +100,14 @@ class RelatorioService:
             pdf.set_font("Arial", "", 12)
             inicio = c.inicio.strftime("%d/%m/%Y %H:%M")
             fim = c.fim.strftime("%d/%m/%Y %H:%M")
+            
+            # Busca nome do paciente
+            paciente = paciente_repo.get_by_id(c.paciente_id)
+            paciente_nome = paciente.nome if paciente else f"Paciente {c.paciente_id}"
+            
             pdf.cell(40, 8, inicio)
             pdf.cell(40, 8, fim)
-            pdf.cell(60, 8, str(c.paciente_id))
+            pdf.cell(60, 8, paciente_nome)
             pdf.cell(40, 8, c.status)
             pdf.ln(8)
 

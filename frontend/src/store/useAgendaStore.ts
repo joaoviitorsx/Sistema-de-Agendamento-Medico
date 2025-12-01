@@ -148,23 +148,6 @@ export const useAgendaStore = create<AgendaStore>((set, get) => ({
         console.log('🎯 Current selectedSlot:', selectedSlot);
         console.log('📍 Event dados:', dados);
         
-        // Ignora eventos do próprio slot selecionado
-        const isOwnSlot = selectedSlot && 
-                          selectedSlot.medicoId === dados.medico_id && 
-                          selectedSlot.datetime === dados.slot;
-        
-        console.log('🔎 Is own slot?', isOwnSlot, {
-          'selectedSlot.medicoId': selectedSlot?.medicoId,
-          'dados.medico_id': dados.medico_id,
-          'selectedSlot.datetime': selectedSlot?.datetime,
-          'dados.slot': dados.slot
-        });
-        
-        if (isOwnSlot) {
-          console.log('⏭️ Ignoring own slot event');
-          return; // Não atualiza o próprio slot selecionado
-        }
-        
         console.log(`🔄 Processing event type: ${tipo}`);
         
         // Se for horario_atualizado, apenas recarrega os slots
@@ -174,6 +157,7 @@ export const useAgendaStore = create<AgendaStore>((set, get) => ({
           return;
         }
         
+        // Processa o evento SSE para TODOS os usuários
         if (tipo === 'horario_reservado') {
           console.log(`🟡 Setting slot to RESERVADO: ${dados.slot}`);
           get().updateSlotStatus(dados.medico_id, dados.slot, 'reservado');
@@ -183,6 +167,22 @@ export const useAgendaStore = create<AgendaStore>((set, get) => ({
         } else if (tipo === 'horario_ocupado') {
           console.log(`🔴 Setting slot to OCUPADO: ${dados.slot}`);
           get().updateSlotStatus(dados.medico_id, dados.slot, 'ocupado');
+          
+          // Força um reload dos slots para garantir sincronização
+          console.log('🔄 Recarregando slots após confirmação de agendamento...');
+          setTimeout(() => {
+            get().fetchSlots();
+          }, 500);
+          
+          // Se este slot estava selecionado pelo usuário atual, limpa a seleção
+          const isMySelectedSlot = selectedSlot && 
+                                   selectedSlot.medicoId === dados.medico_id && 
+                                   selectedSlot.datetime === dados.slot;
+          if (isMySelectedSlot) {
+            console.log('⚠️ Seu slot selecionado foi ocupado por outro paciente!');
+            toast.error('O horário que você selecionou foi agendado por outro paciente. Por favor, escolha outro horário.');
+            get().clearSelectedSlot();
+          }
         } else if (tipo === 'horario_disponivel') {
           console.log(`🟢 Setting slot to DISPONIVEL: ${dados.slot}`);
           get().updateSlotStatus(dados.medico_id, dados.slot, 'disponivel');

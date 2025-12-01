@@ -27,6 +27,11 @@ export const SlotSelector = ({ medicoId, onSelectSlot, selectedSlot }: SlotSelec
     };
   }, [medicoId]);
 
+  // Re-renderiza quando os slots mudarem (importante para SSE updates)
+  useEffect(() => {
+    console.log('🔄 Slots atualizados no SlotSelector:', slots[medicoId]);
+  }, [slots, medicoId]);
+
   const loadSlots = async () => {
     setLoading(true);
     await fetchSlots(7); // 7 dias
@@ -116,24 +121,22 @@ export const SlotSelector = ({ medicoId, onSelectSlot, selectedSlot }: SlotSelec
               const status = getSlotStatus(medicoId, datetime);
               const isSelected = selectedSlot === datetime;
               
-              // Se o usuário selecionou este slot, sempre mostra como disponível (verde)
-              // ignorando o status do backend/SSE
-              let effectiveStatus: SlotStatus;
-              if (isSelected) {
-                effectiveStatus = 'disponivel';
-              } else {
-                effectiveStatus = status;
-              }
-              
+              // Usa o status real do backend/SSE
+              const effectiveStatus = status;
               const info = getStatusInfo(effectiveStatus);
               const Icon = info.icon;
+
+              // Log para debug de slots ocupados
+              if (status === 'ocupado') {
+                console.log(`🔴 Slot ${datetime} está OCUPADO`);
+              }
 
               return (
                 <button
                   key={datetime}
                   className={`slot-button ${info.className} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => !info.disabled && onSelectSlot(datetime)}
-                  disabled={info.disabled && !isSelected}
+                  onClick={() => onSelectSlot(datetime)}
+                  disabled={info.disabled}
                   title={isSelected ? 'Selecionado' : info.label}
                 >
                   <Icon size={18} />

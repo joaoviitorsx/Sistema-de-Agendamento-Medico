@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 import { Card } from '../../components/ui/Card';
 import { Table } from '../../components/ui/Table';
 import { useConsultaStore } from '@/store/useConsultaStore';
@@ -9,13 +10,19 @@ import { Consulta } from '@/types';
 
 export const ConsultasPaciente = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
+  const navigate = useNavigate();
   const { consultas, fetchConsultas, loading } = useConsultaStore();
   const { medicos, fetchMedicos } = useMedicoStore();
 
   useEffect(() => {
+    if (!pacienteId) {
+      toast.error('ID do paciente não encontrado');
+      navigate('/');
+      return;
+    }
     fetchConsultas();
     fetchMedicos();
-  }, []);
+  }, [pacienteId, navigate, fetchConsultas, fetchMedicos]);
 
   // Filtrar consultas do paciente atual
   const minhasConsultas = consultas
@@ -27,7 +34,7 @@ export const ConsultasPaciente = () => {
       key: 'inicio',
       label: 'Data/Hora',
       dataIndex: 'inicio',
-      render: (_: any, record: Consulta) => {
+      render: (_: unknown, record: Consulta) => {
         if (!record || !record.inicio) return 'N/A';
         try {
           return format(new Date(record.inicio), 'dd/MM/yyyy HH:mm');
@@ -40,7 +47,7 @@ export const ConsultasPaciente = () => {
       key: 'medico_id',
       label: 'Médico',
       dataIndex: 'medico_id',
-      render: (_: any, record: Consulta) => {
+      render: (_: unknown, record: Consulta) => {
         if (!record || !record.medico_id) return 'N/A';
         const medico = medicos.find((m) => m.id === record.medico_id);
         return medico ? `${medico.nome} - ${medico.especialidade}` : 'Médico não encontrado';
@@ -50,7 +57,7 @@ export const ConsultasPaciente = () => {
       key: 'status',
       label: 'Status',
       dataIndex: 'status',
-      render: (_: any, record: Consulta) => {
+      render: (_: unknown, record: Consulta) => {
         if (!record || !record.status) return 'N/A';
         return (
           <span
@@ -76,19 +83,33 @@ export const ConsultasPaciente = () => {
       key: 'observacoes',
       label: 'Observações',
       dataIndex: 'observacoes',
-      render: (_: any, record: Consulta) => record?.observacoes || '-',
+      render: (_: unknown, record: Consulta) => record?.observacoes || '-',
     },
   ];
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="animate-fadeIn flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando consultas...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="animate-fadeIn">
       <h1>Minhas Consultas</h1>
       <Card>
-        <Table data={minhasConsultas} columns={columns} />
+        {minhasConsultas.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-2">Você ainda não possui consultas agendadas.</p>
+            <p className="text-gray-400 text-sm">Clique em "Agendar" no menu para marcar uma nova consulta.</p>
+          </div>
+        ) : (
+          <Table data={minhasConsultas} columns={columns} />
+        )}
       </Card>
     </div>
   );

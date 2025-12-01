@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from datetime import date, datetime, timedelta
 from typing import Dict
+import logging
 
 from ..repositories.horario_repository import HorarioRepository
 from ..repositories.consulta_repository import ConsultaRepository
@@ -8,6 +9,7 @@ from ..infra.schedule_state import schedule_state
 from ..services.event_service import enviar_evento_sse
 
 router = APIRouter(tags=["Agenda"])
+logger = logging.getLogger("agenda_controller")
 
 # mapeamento simples de nomes para weekday()
 _DIA_MAP = {
@@ -59,29 +61,46 @@ async def listar_slots(days: int = 7):
                 if target_wd != wd:
                     continue
 
-                # constrói datetime com a data d e hora_inicio
+                # Gera slots de 30 em 30 minutos entre hora_inicio e hora_fim
                 try:
-                    # h.hora_inicio esperado no formato HH:MM
-                    iso = datetime.fromisoformat(f"{d.isoformat()}T{h.hora_inicio}")
-                except Exception:
-                    # fallback: ignore
+                    # Parse hora_inicio e hora_fim (formato HH:MM)
+                    hora_ini_parts = h.hora_inicio.split(":")
+                    hora_fim_parts = h.hora_fim.split(":")
+                    
+                    hora_ini = int(hora_ini_parts[0])
+                    min_ini = int(hora_ini_parts[1])
+                    hora_fim = int(hora_fim_parts[0])
+                    min_fim = int(hora_fim_parts[1])
+                    
+                    # Cria datetime inicial
+                    current = datetime(d.year, d.month, d.day, hora_ini, min_ini)
+                    fim_datetime = datetime(d.year, d.month, d.day, hora_fim, min_fim)
+                    
+                    # Gera slots de 30 em 30 minutos
+                    while current < fim_datetime:
+                        slot_iso = current.isoformat()
+                        key = f"{medico_id}:{slot_iso}"
+
+                        # estado inicial: verificar state, depois consultas
+                        estado = schedule_state.get_status(key)
+
+                        # se ainda disponível, verificar consultas já gravadas
+                        if estado == "disponivel":
+                            # marca como ocupado se existir consulta com mesmo medico e início
+                            for c in consultas:
+                                if c.medico_id == medico_id and c.inicio.isoformat() == slot_iso and c.status == "agendada":
+                                    estado = "ocupado"
+                                    break
+
+                        slots[slot_iso] = estado
+                        
+                        # Avança 30 minutos
+                        current = current + timedelta(minutes=30)
+                        
+                except Exception as e:
+                    # fallback: ignore horário inválido
+                    logger.warning(f"Erro ao processar horário {h.hora_inicio}-{h.hora_fim}: {e}")
                     continue
-
-                slot_iso = iso.isoformat()
-                key = f"{medico_id}:{slot_iso}"
-
-                # estado inicial: verificar state, depois consultas
-                estado = schedule_state.get_status(key)
-
-                # se ainda disponível, verificar consultas já gravadas
-                if estado == "disponivel":
-                    # marca como ocupado se existir consulta com mesmo medico e início
-                    for c in consultas:
-                        if c.medico_id == medico_id and c.inicio.isoformat() == slot_iso and c.status == "agendada":
-                            estado = "ocupado"
-                            break
-
-                slots[slot_iso] = estado
 
         result[medico_id] = slots
 

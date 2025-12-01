@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { User, ChevronRight } from 'lucide-react';
+import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { SlotSelector } from '@/components/domain/SlotSelector';
@@ -23,6 +25,14 @@ export const AgendarConsulta = () => {
     const [observacoes, setObservacoes] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Valida se o pacienteId existe
+    useEffect(() => {
+        if (!pacienteId) {
+            toast.error('ID do paciente não encontrado');
+            navigate('/');
+        }
+    }, [pacienteId, navigate]);
+
     useEffect(() => {
         fetchMedicos();
         fetchPacientes();
@@ -32,7 +42,7 @@ export const AgendarConsulta = () => {
         return () => {
             disconnectSSE();
         };
-    }, []);
+    }, [fetchMedicos, fetchPacientes, connectSSE, disconnectSSE]);
 
     useEffect(() => {
         if (pacienteId) {
@@ -40,7 +50,16 @@ export const AgendarConsulta = () => {
         }
     }, [pacienteId]);
 
-    // Cleanup: libera slot quando o componente é desmontado ou quando muda de médico
+    // Monitora se o slot selecionado foi limpo (ocupado por outro paciente)
+    // e volta para o step de seleção de horário
+    useEffect(() => {
+        if (step === 3 && !selectedSlot) {
+            // Se estava no step 3 (confirmação) e perdeu o slot, volta para step 2
+            setStep(2);
+        }
+    }, [selectedSlot, step]);
+
+    // Cleanup: libera slot quando o componente é desmontado
     useEffect(() => {
         return () => {
             if (selectedSlot && selectedSlot.medicoId) {
@@ -48,6 +67,7 @@ export const AgendarConsulta = () => {
                 clearSelectedSlot();
             }
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Libera slot quando troca de step (voltando)
@@ -73,9 +93,27 @@ export const AgendarConsulta = () => {
 
     const handleSelectSlot = async (datetime: string) => {
         if (!selectedMedico) return;
+        
+        // Verifica se o slot está realmente disponível
+        const slotStatus = useAgendaStore.getState().getSlotStatus(selectedMedico, datetime);
+        
+        // Se estiver ocupado ou reservado, não permite selecionar
+        if (slotStatus === 'ocupado') {
+            toast.error('Este horário já foi ocupado por outro paciente');
+            return;
+        }
+        
+        if (slotStatus === 'reservado') {
+            toast.error('Este horário está sendo agendado por outro paciente. Aguarde...');
+            return;
+        }
+        
+        // Libera o slot anterior se houver
         if (selectedSlot) {
             await liberarSlot(selectedMedico, selectedSlot.datetime);
         }
+        
+        // Tenta reservar o novo slot
         const success = await reservarSlot(selectedMedico, datetime);
         if (success) {
             setSelectedSlot(selectedMedico, datetime);
@@ -84,17 +122,31 @@ export const AgendarConsulta = () => {
 
     const handleConfirmar = async () => {
         if (!selectedPaciente || !selectedMedico || !selectedSlot) return;
+        
+        // Verifica se o slot ainda está reservado/disponível antes de confirmar
+        const currentStatus = useAgendaStore.getState().getSlotStatus(selectedMedico, selectedSlot.datetime);
+        if (currentStatus === 'ocupado') {
+            toast.error('Este horário foi ocupado por outro paciente. Por favor, escolha outro horário.');
+            clearSelectedSlot();
+            setStep(2); // Volta para seleção de horário
+            return;
+        }
+        
         setLoading(true);
         try {
             // Calcula a data de fim (1 hora depois)
             const inicioDate = new Date(selectedSlot.datetime);
             const fimDate = new Date(inicioDate.getTime() + 60 * 60 * 1000);
             
+            // Formata as datas sem timezone (naive datetime)
+            const inicioStr = selectedSlot.datetime; // já está no formato correto
+            const fimStr = format(fimDate, "yyyy-MM-dd'T'HH:mm:ss");
+            
             const result = await agendarConsulta({
                 paciente_id: selectedPaciente,
                 medico_id: selectedMedico,
-                inicio: selectedSlot.datetime,
-                fim: fimDate.toISOString(),
+                inicio: inicioStr,
+                fim: fimStr,
                 observacoes,
             });
             if (result) {
@@ -155,8 +207,14 @@ export const AgendarConsulta = () => {
                 {step === 1 && (
                     <div className="bg-white rounded-xl shadow-lg p-8 animate-fadeIn">
                         <h2 className="text-xl font-semibold mb-6 text-blue-800">Escolha o Médico</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                            {medicosFiltrados.map((medico) => (
+                        {medicosFiltrados.length === 0 ? (
+                            <div className="text-center py-12">
+                                <p className="text-gray-500 mb-2">Nenhum médico disponível no momento.</p>
+                                <p className="text-gray-400 text-sm">Por favor, tente novamente mais tarde.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                {medicosFiltrados.map((medico) => (
                                 <button
                                     key={medico.id}
                                     className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all duration-150 w-full
@@ -174,8 +232,9 @@ export const AgendarConsulta = () => {
                                         <div className="text-xs text-blue-500">{medico.especialidade}</div>
                                     </div>
                                 </button>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                         <div className="flex justify-between">
                             <Button onClick={handleCancelar} variant="secondary">
                                 Cancelar

@@ -5,7 +5,7 @@ from pathlib import Path
 from ..services.task_service import TaskService
 from ..services.backup_service import BackupService
 
-router = APIRouter(prefix="/backup", tags=["Backup"])
+router = APIRouter(tags=["Backup"])
 
 task_service = TaskService()
 backup_service = BackupService()

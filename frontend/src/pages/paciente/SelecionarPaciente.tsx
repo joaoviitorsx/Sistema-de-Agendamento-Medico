@@ -10,7 +10,7 @@ export const SelecionarPaciente = () => {
 
   useEffect(() => {
     fetchPacientes();
-  }, []);
+  }, [fetchPacientes]);
 
   const handleSelectPaciente = (pacienteId: string) => {
     navigate(`/paciente/${pacienteId}/home`);

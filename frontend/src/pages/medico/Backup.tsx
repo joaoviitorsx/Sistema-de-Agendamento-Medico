@@ -1,11 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { SaveOutlined, DownloadOutlined, UploadOutlined, CheckCircleOutlined, ClockCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import { backupApi } from '@/api/backupApi';
+import toast from 'react-hot-toast';
 import './CrudPages.css';
 
 export const Backup = () => {
-  const [lastBackup] = useState(new Date().toLocaleString('pt-BR'));
+  const [backups, setBackups] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingBackups, setLoadingBackups] = useState(true);
+
+  useEffect(() => {
+    carregarBackups();
+  }, []);
+
+  const carregarBackups = async () => {
+    try {
+      setLoadingBackups(true);
+      const response = await backupApi.listarBackups();
+      setBackups(response.arquivos || []);
+    } catch (error) {
+      console.error('Erro ao carregar backups:', error);
+      toast.error('Erro ao carregar lista de backups');
+    } finally {
+      setLoadingBackups(false);
+    }
+  };
+
+  const executarBackup = async () => {
+    try {
+      setLoading(true);
+      toast.loading('Criando backup...', { id: 'backup' });
+      await backupApi.executarBackup();
+      toast.success('Backup criado com sucesso!', { id: 'backup' });
+      // Aguarda 2 segundos para o arquivo ser criado
+      setTimeout(() => {
+        carregarBackups();
+      }, 2000);
+    } catch (error) {
+      console.error('Erro ao criar backup:', error);
+      toast.error('Erro ao criar backup', { id: 'backup' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const baixarBackup = (nomeArquivo: string) => {
+    const url = backupApi.getDownloadUrl(nomeArquivo);
+    window.open(url, '_blank');
+  };
+
+  const lastBackup = backups.length > 0 ? backups[0] : null;
 
   return (
     <div className="crud-page animate-fadeIn">
@@ -24,8 +70,12 @@ export const Backup = () => {
               <CheckCircleOutlined className="text-2xl text-success" />
               <h3 className="text-lg font-semibold text-neutral-black">Último Backup</h3>
             </div>
-            <p className="text-2xl font-bold text-primary">{lastBackup}</p>
-            <p className="text-sm text-neutral-medium mt-1">Backup automático realizado</p>
+            <p className="text-2xl font-bold text-primary">
+              {lastBackup ? lastBackup.replace('backup_', '').replace('.zip', '').replace(/_/g, ' ') : 'Nenhum backup'}
+            </p>
+            <p className="text-sm text-neutral-medium mt-1">
+              {lastBackup ? 'Último backup disponível' : 'Nenhum backup criado'}
+            </p>
           </div>
         </Card>
 
@@ -46,7 +96,7 @@ export const Backup = () => {
               <SaveOutlined className="text-2xl text-info" />
               <h3 className="text-lg font-semibold text-neutral-black">Total de Backups</h3>
             </div>
-            <p className="text-2xl font-bold" style={{ color: '#0288D1' }}>15 arquivos</p>
+            <p className="text-2xl font-bold" style={{ color: '#0288D1' }}>{backups.length} arquivos</p>
             <p className="text-sm text-neutral-medium mt-1">Armazenados no servidor</p>
           </div>
         </Card>
@@ -82,11 +132,16 @@ export const Backup = () => {
           </div>
 
           <div className="flex gap-4">
-            <Button variant="primary" className="flex-1">
+            <Button variant="primary" className="flex-1" onClick={executarBackup} disabled={loading}>
               <SaveOutlined className="mr-2" />
-              Criar Backup Completo
+              {loading ? 'Criando Backup...' : 'Criar Backup Completo'}
             </Button>
-            <Button variant="secondary" className="flex-1">
+            <Button 
+              variant="secondary" 
+              className="flex-1" 
+              onClick={() => lastBackup && baixarBackup(lastBackup)}
+              disabled={!lastBackup}
+            >
               <DownloadOutlined className="mr-2" />
               Baixar Último Backup
             </Button>
@@ -146,34 +201,40 @@ export const Backup = () => {
         <div className="p-6">
           <h2 className="text-xl font-bold text-neutral-black mb-4">Backups Recentes</h2>
           
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-4 border border-neutral-light rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <SaveOutlined className="text-xl text-primary" />
-                  <div>
-                    <h4 className="font-semibold text-neutral-black">
-                      backup_{new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}.json
-                    </h4>
-                    <p className="text-sm text-neutral-medium">
-                      {new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleString('pt-BR')}
-                    </p>
+          {loadingBackups ? (
+            <div className="text-center py-8">
+              <p className="text-neutral-medium">Carregando backups...</p>
+            </div>
+          ) : backups.length === 0 ? (
+            <div className="text-center py-8">
+              <SaveOutlined className="text-5xl text-neutral-light mb-3" />
+              <p className="text-neutral-medium">Nenhum backup disponível.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {backups.map((backup) => (
+                <div
+                  key={backup}
+                  className="flex items-center justify-between p-4 border border-neutral-light rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <SaveOutlined className="text-xl text-primary" />
+                    <div>
+                      <h4 className="font-semibold text-neutral-black">{backup}</h4>
+                      <p className="text-sm text-neutral-medium">
+                        {backup.replace('backup_', '').replace('.zip', '').replace(/_/g, ' ')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" title="Baixar" onClick={() => baixarBackup(backup)}>
+                      <DownloadOutlined />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="secondary" title="Baixar">
-                    <DownloadOutlined />
-                  </Button>
-                  <Button variant="danger" title="Excluir">
-                    <DeleteOutlined />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
     </div>

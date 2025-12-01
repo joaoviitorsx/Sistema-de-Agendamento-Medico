@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useConsultaStore } from '@/store/useConsultaStore';
 import { usePacienteStore } from '@/store/usePacienteStore';
+import { useMedicoStore } from '@/store/useMedicoStore';
 import './HomePaciente.css';
 
 export const HomePaciente = () => {
@@ -12,11 +13,13 @@ export const HomePaciente = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
   const { consultas, fetchConsultas } = useConsultaStore();
   const { getPaciente } = usePacienteStore();
+  const { medicos, fetchMedicos } = useMedicoStore();
   const [nomePaciente, setNomePaciente] = useState<string>('');
 
   useEffect(() => {
     fetchConsultas();
-  }, []);
+    fetchMedicos();
+  }, [fetchConsultas, fetchMedicos]);
 
   useEffect(() => {
     const carregarPaciente = async () => {
@@ -26,11 +29,15 @@ export const HomePaciente = () => {
           setNomePaciente(paciente.nome);
         } else {
           setNomePaciente('Paciente');
+          // Se o paciente não existe, redireciona para seleção após 2 segundos
+          setTimeout(() => {
+            navigate('/');
+          }, 2000);
         }
       }
     };
     carregarPaciente();
-  }, [pacienteId, getPaciente]);
+  }, [pacienteId, getPaciente, navigate]);
 
   const proximasConsultas = consultas
     .filter((c) => c.paciente_id === pacienteId && new Date(c.inicio) > new Date() && c.status === 'agendada')
@@ -64,15 +71,20 @@ export const HomePaciente = () => {
         {proximasConsultas.length > 0 && (
           <Card title="Próximas Consultas">
             <div className="consultas-list">
-              {proximasConsultas.map((consulta) => (
-                <div key={consulta.id} className="consulta-item">
-                  <Calendar size={20} />
-                  <div className="consulta-info">
-                    <strong>{new Date(consulta.inicio).toLocaleString('pt-BR')}</strong>
-                    <span>Médico ID: {consulta.medico_id}</span>
+              {proximasConsultas.map((consulta) => {
+                const medico = medicos.find((m) => m.id === consulta.medico_id);
+                return (
+                  <div key={consulta.id} className="consulta-item">
+                    <Calendar size={20} />
+                    <div className="consulta-info">
+                      <strong>{new Date(consulta.inicio).toLocaleString('pt-BR')}</strong>
+                      <span>
+                        {medico ? `Dr(a). ${medico.nome} - ${medico.especialidade}` : 'Médico não encontrado'}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <Button
               variant="secondary"

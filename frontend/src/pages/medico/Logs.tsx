@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from '../../components/ui/Card';
 import { logsApi, parseLogLine } from '@/api/logsApi';
 import { FileTextOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -8,7 +8,6 @@ import './CrudPages.css';
 export const Logs = () => {
     const [logs, setLogs] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
-    const logsEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         loadLogs();
@@ -16,6 +15,7 @@ export const Logs = () => {
         const eventSource = logsApi.getLogsStream();
 
         eventSource.onmessage = (event) => {
+            // Adiciona no início para manter mais recentes primeiro
             setLogs((prev) => [event.data, ...prev]);
         };
 
@@ -30,16 +30,15 @@ export const Logs = () => {
         // eslint-disable-next-line
     }, []);
 
-    useEffect(() => {
-        // Scroll para o topo (último log)
-        logsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, [logs]);
+    // useEffect removido - não precisa scroll automático
+    // Logs mais recentes ficam no topo
 
     const loadLogs = async () => {
         try {
             setLoading(true);
             const response = await logsApi.getLogs();
-            setLogs(response.logs.reverse());
+            // NÃO inverte - mantém ordem original (mais recente primeiro)
+            setLogs(response.logs);
         } catch (error) {
             console.error('Erro ao carregar logs:', error);
         } finally {
@@ -108,7 +107,6 @@ export const Logs = () => {
                                         <div key={index} className="text-gray-300">{log}</div>
                                     );
                                 })}
-                                <div ref={logsEndRef} />
                             </pre>
                         </div>
                     )}
