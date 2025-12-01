@@ -36,6 +36,7 @@ async def listar_slots(days: int = 7):
     Estrutura: { medico_id: { slot_iso: status } }
     Gera slots para os próximos `days` dias com base nos `horarios` do médico.
     """
+    logger.info(f"📅 Listando slots para os próximos {days} dias")
     hr_repo = HorarioRepository()
     c_repo = ConsultaRepository()
 
@@ -104,6 +105,8 @@ async def listar_slots(days: int = 7):
 
         result[medico_id] = slots
 
+    total_slots = sum(len(slots) for slots in result.values())
+    logger.info(f"✅ Gerados {total_slots} slots para {len(result)} médicos")
     return result
 
 
@@ -115,7 +118,9 @@ async def reservar_slot(payload: dict):
     """
     medico_id = payload.get("medico_id")
     slot = payload.get("slot")
+    logger.info(f"🔒 Tentando reservar slot: médico={medico_id}, horário={slot}")
     if not medico_id or not slot:
+        logger.error(f"❌ Reserva falhou: dados incompletos (medico_id={medico_id}, slot={slot})")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="medico_id e slot são obrigatórios")
 
     key = f"{medico_id}:{slot}"
@@ -126,6 +131,7 @@ async def reservar_slot(payload: dict):
 
     # publica evento SSE para notificar subscribers (slot sem prefixo)
     await enviar_evento_sse("horario_reservado", {"slot": slot, "medico_id": medico_id})
+    logger.info(f"✅ Slot reservado com sucesso: {slot} - Médico: {medico_id}")
 
     return {"status": "reservado", "slot": slot, "medico_id": medico_id}
 
@@ -138,7 +144,9 @@ async def liberar_slot(payload: dict):
     """
     medico_id = payload.get("medico_id")
     slot = payload.get("slot")
+    logger.info(f"🔓 Tentando liberar slot: médico={medico_id}, horário={slot}")
     if not medico_id or not slot:
+        logger.error(f"❌ Liberação falhou: dados incompletos")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="medico_id e slot são obrigatórios")
 
     key = f"{medico_id}:{slot}"
@@ -149,6 +157,7 @@ async def liberar_slot(payload: dict):
         schedule_state.set_status(key, "disponivel")
         # publica evento SSE para notificar subscribers
         await enviar_evento_sse("horario_liberado", {"slot": slot, "medico_id": medico_id})
+        logger.info(f"✅ Slot liberado com sucesso: {slot}")
         return {"status": "liberado", "slot": slot, "medico_id": medico_id}
     elif current_status == "ocupado":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Horário já está ocupado com consulta confirmada")

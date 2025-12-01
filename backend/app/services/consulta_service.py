@@ -26,12 +26,19 @@ class ConsultaService:
 
     # LISTAR / OBTER
     async def listar_consultas(self) -> List[Consulta]:
-        logger.info("Listando consultas")
-        return await asyncio.to_thread(self.repo.list_all)
+        logger.info("📋 Listando todas as consultas")
+        result = await asyncio.to_thread(self.repo.list_all)
+        logger.info(f"✅ {len(result)} consultas encontradas")
+        return result
 
     async def obter_consulta(self, consulta_id: str) -> Optional[Consulta]:
-        logger.info("Consultando consulta %s", consulta_id)
-        return await asyncio.to_thread(self.repo.get_by_id, consulta_id)
+        logger.info(f"🔍 Buscando consulta: ID={consulta_id}")
+        result = await asyncio.to_thread(self.repo.get_by_id, consulta_id)
+        if result:
+            logger.info(f"✅ Consulta encontrada: ID={consulta_id}")
+        else:
+            logger.warning(f"❌ Consulta não encontrada: ID={consulta_id}")
+        return result
 
     # CRUD
     async def criar_consulta(self, payload: ConsultaCreate) -> Consulta:
@@ -75,8 +82,10 @@ class ConsultaService:
             updated_at=now,
         )
 
-        logger.info("Criando consulta %s para médico %s", consulta.id, consulta.medico_id)
-        return await asyncio.to_thread(self.repo.save, consulta)
+        logger.info(f"💾 Salvando consulta no banco: ID={consulta.id}, Médico={consulta.medico_id}, Paciente={consulta.paciente_id}, Início={consulta.inicio}")
+        result = await asyncio.to_thread(self.repo.save, consulta)
+        logger.info(f"✅ Consulta criada com sucesso: ID={consulta.id}")
+        return result
 
     async def atualizar_consulta(self, consulta_id: str, payload: ConsultaUpdate) -> Optional[Consulta]:
         consulta = await asyncio.to_thread(self.repo.get_by_id, consulta_id)

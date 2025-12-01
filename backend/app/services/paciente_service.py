@@ -16,12 +16,19 @@ class PacienteService:
         self.repository = repository or PacienteRepository()
 
     async def listar_pacientes(self) -> List[Paciente]:
-        logger.info("Listando pacientes")
-        return await asyncio.to_thread(self.repository.list_all)
+        logger.info("👥 Buscando lista de pacientes no repositório")
+        result = await asyncio.to_thread(self.repository.list_all)
+        logger.info(f"✅ {len(result)} pacientes carregados")
+        return result
 
     async def obter_paciente(self, paciente_id: str) -> Optional[Paciente]:
-        logger.info("Obtendo paciente %s", paciente_id)
-        return await asyncio.to_thread(self.repository.get_by_id, paciente_id)
+        logger.info(f"🔍 Buscando paciente: ID={paciente_id}")
+        result = await asyncio.to_thread(self.repository.get_by_id, paciente_id)
+        if result:
+            logger.info(f"✅ Paciente encontrado: {result.nome} (ID={paciente_id})")
+        else:
+            logger.warning(f"❌ Paciente não encontrado: ID={paciente_id}")
+        return result
 
     async def criar_paciente(self, payload: PacienteCreate) -> Paciente:
         now = datetime.utcnow()
@@ -48,16 +55,18 @@ class PacienteService:
             created_at=now,
             updated_at=now,
         )
-        logger.info("Criando paciente %s (%s)", paciente.nome, paciente.id)
-        return await asyncio.to_thread(self.repository.save, paciente)
+        logger.info(f"💾 Salvando paciente no banco: Nome={paciente.nome}, CPF={paciente.cpf}, ID={paciente.id}")
+        result = await asyncio.to_thread(self.repository.save, paciente)
+        logger.info(f"✅ Paciente criado com sucesso: ID={paciente.id}")
+        return result
 
     async def atualizar_paciente(
         self, paciente_id: str, payload: PacienteUpdate
     ) -> Optional[Paciente]:
-        logger.info("Atualizando paciente %s", paciente_id)
+        logger.info(f"✏️ Atualizando paciente: ID={paciente_id}")
         existente = await asyncio.to_thread(self.repository.get_by_id, paciente_id)
         if not existente:
-            logger.warning("Paciente %s não encontrado para atualização", paciente_id)
+            logger.warning(f"❌ Paciente não encontrado para atualização: ID={paciente_id}")
             return None
 
         # atualiza apenas campos enviados
@@ -69,8 +78,16 @@ class PacienteService:
             existente.telefone = payload.telefone
 
         existente.updated_at = datetime.utcnow()
-        return await asyncio.to_thread(self.repository.save, existente)
+        logger.info(f"💾 Salvando atualizações do paciente: ID={paciente_id}")
+        result = await asyncio.to_thread(self.repository.save, existente)
+        logger.info(f"✅ Paciente atualizado com sucesso: ID={paciente_id}")
+        return result
 
     async def deletar_paciente(self, paciente_id: str) -> bool:
-        logger.info("Deletando paciente %s", paciente_id)
-        return await asyncio.to_thread(self.repository.delete, paciente_id)
+        logger.info(f"🗑️ Deletando paciente do banco: ID={paciente_id}")
+        result = await asyncio.to_thread(self.repository.delete, paciente_id)
+        if result:
+            logger.info(f"✅ Paciente deletado com sucesso: ID={paciente_id}")
+        else:
+            logger.warning(f"❌ Falha ao deletar paciente: ID={paciente_id}")
+        return result

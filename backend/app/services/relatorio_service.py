@@ -51,10 +51,12 @@ class RelatorioService:
         os.makedirs(self.reports_dir, exist_ok=True)
 
     def gerar_relatorio(self, filtros: dict) -> str:
+        logger.info(f"📊 Iniciando geração de relatório com filtros: {filtros}")
         repo = ConsultaRepository()
         medico_repo = MedicoRepository()
         paciente_repo = PacienteRepository()
         consultas = repo.list_all()
+        logger.info(f"📋 {len(consultas)} consultas carregadas do banco")
 
         medico_id = filtros.get("medico_id")
         periodo_inicio = filtros.get("periodo_inicio")
@@ -63,18 +65,22 @@ class RelatorioService:
         medico_nome = "Todos"
         if medico_id:
             consultas = [c for c in consultas if c.medico_id == medico_id]
+            logger.info(f"🔍 Filtrado por médico ID={medico_id}: {len(consultas)} consultas")
             medico = medico_repo.get_by_id(medico_id)
             if medico:
                 medico_nome = medico.nome
+                logger.info(f"👨‍⚕️ Médico encontrado: {medico_nome}")
 
         if periodo_inicio and periodo_fim:
             try:
                 dt_inicio = datetime.fromisoformat(periodo_inicio)
                 dt_fim = datetime.fromisoformat(periodo_fim)
                 consultas = [c for c in consultas if c.inicio >= dt_inicio and c.fim <= dt_fim]
+                logger.info(f"📅 Filtrado por período {periodo_inicio} até {periodo_fim}: {len(consultas)} consultas")
             except Exception as e:
-                logger.warning(f"Período inválido: {e}")
+                logger.warning(f"⚠️ Período inválido: {e}")
 
+        logger.info(f"📄 Gerando PDF com {len(consultas)} consultas")
         pdf = PDFRelatorio()
         pdf.add_page()
 
@@ -114,7 +120,7 @@ class RelatorioService:
         destino = self.reports_dir / f"relatorio_{datetime.utcnow().timestamp()}.pdf"
         pdf.output(str(destino))
 
-        logger.info(f"Relatório criado em {destino}")
+        logger.info(f"✅ Relatório criado com sucesso: {destino.name} ({destino.stat().st_size} bytes)")
 
         return str(destino)
 

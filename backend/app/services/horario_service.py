@@ -1,7 +1,10 @@
 from typing import List, Optional
+import logging
 from ..schemas.horario_schema import HorarioCreate, HorarioUpdate, HorarioOut
 from ..repositories.horario_repository import HorarioRepository
 from ..services.event_service import enviar_evento_sse
+
+logger = logging.getLogger("horario_service")
 
 class HorarioService:
     def __init__(self):
@@ -20,12 +23,14 @@ class HorarioService:
         return HorarioOut(**h) if h else None
 
     async def criar_horario(self, medico_id: str, payload: HorarioCreate) -> HorarioOut:
+        logger.info(f"🕐 Criando horário para médico {medico_id}: {payload.dia_semana} {payload.hora_inicio}-{payload.hora_fim}")
         h = await self.repo.criar_horario(medico_id, payload.dict())
         # notifica clients que os horários do médico foram alterados
         try:
             await enviar_evento_sse("horario_atualizado", {"medico_id": medico_id})
-        except Exception:
-            pass
+            logger.info(f"✅ Horário criado e evento SSE enviado")
+        except Exception as e:
+            logger.warning(f"⚠️ Horário criado mas falha no SSE: {e}")
         return HorarioOut(**h)
 
     async def atualizar_horario(self, horario_id: str, payload: HorarioUpdate) -> Optional[HorarioOut]:

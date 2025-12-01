@@ -1,10 +1,13 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
+import logging
 
 from ..schemas.consulta_schema import ConsultaCreate, ConsultaOut, ConsultaUpdate
 from ..services.consulta_service import ConsultaService
 from ..services.task_service import TaskService
 from ..infra.schedule_state import schedule_state
+
+logger = logging.getLogger("consulta_controller")
 
 router = APIRouter()
 
@@ -63,20 +66,25 @@ async def deletar_consulta(consulta_id: str, service: ConsultaService = Depends(
 
 @router.post("/agendar")
 async def agendar_async(payload: ConsultaCreate):
+    logger.info(f"📅 Recebida solicitação de agendamento: Médico={payload.medico_id}, Paciente={payload.paciente_id}, Início={payload.inicio}, Fim={payload.fim}")
     slot_key = f"{payload.medico_id}:{payload.inicio.isoformat()}"
 
     # Aceita tanto "disponivel" quanto "reservado" para agendar
     # Rejeita apenas se já estiver "ocupado"
     current_status = schedule_state.get_status(slot_key)
+    logger.info(f"🔍 Status atual do slot {slot_key}: {current_status}")
     if current_status == "ocupado":
+        logger.warning(f"❌ Tentativa de agendar horário já ocupado: {slot_key}")
         raise HTTPException(409, detail="Horário já está ocupado.")
 
     # Marcar como reservado (se ainda não estiver)
     if current_status == "disponivel":
         schedule_state.set_status(slot_key, "reservado")
+        logger.info(f"🔒 Slot marcado como reservado: {slot_key}")
 
     # Enfileirar a tarefa (serializa datetime para string JSON)
     task_id = TaskService().enqueue_agendamento_consulta(payload.model_dump(mode='json'))
+    logger.info(f"✅ Agendamento enfileirado com sucesso: task_id={task_id}, slot={slot_key}")
 
     return {
         "status": "pendente",

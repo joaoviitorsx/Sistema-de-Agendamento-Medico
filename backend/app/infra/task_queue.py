@@ -42,8 +42,9 @@ class TaskQueue:
             self._worker_thread.join(timeout=5)
 
     def enqueue(self, task: Task) -> None:
-        logger.info("Enfileirando tarefa %s / %s", task.id, task.tipo)
+        logger.info(f"📥 Enfileirando tarefa: ID={task.id}, Tipo={task.tipo}")
         self._queue.put(task)
+        logger.info(f"✅ Tarefa adicionada à fila: ID={task.id}")
 
     def _worker_loop(self) -> None:
         logger.info("Worker iniciado")
@@ -68,36 +69,41 @@ class TaskQueue:
         logger.info("Worker finalizado")
 
     async def _process_task(self, task: Task) -> None:
-        logger.info("Processando tarefa %s (%s)", task.id, task.tipo)
+        logger.info(f"⏳ Processando tarefa: ID={task.id}, Tipo={task.tipo}")
 
         if task.tipo == "backup":
+            logger.info(f"💾 Iniciando execução de backup: Motivo={task.payload.get('motivo', 'manual')}")
             BackupService().executar_backup(task.payload.get("motivo", "manual"))
+            logger.info("✅ Backup executado com sucesso")
 
         elif task.tipo == "gerar_relatorio":
+            logger.info(f"📄 Iniciando geração de relatório: Filtros={task.payload}")
             caminho = RelatorioService().gerar_relatorio(task.payload)
-            logger.info("Relatório finalizado: %s", caminho)
+            logger.info(f"✅ Relatório gerado com sucesso: {caminho}")
             await enviar_evento_sse("relatorio_pronto", {"arquivo": caminho})
 
         elif task.tipo == "agendar_consulta":
             dados = task.payload
             slot_key = f"{dados['medico_id']}:{dados['inicio']}"
             slot_iso = dados.get("inicio")
-            logger.info("Iniciando agendamento de consulta: medico=%s, slot=%s", dados['medico_id'], slot_iso)
+            logger.info(f"📅 Iniciando agendamento de consulta: Médico={dados['medico_id']}, Paciente={dados.get('paciente_id')}, Slot={slot_iso}")
             try:
-                logger.info("Criando consulta com payload: %s", dados)
+                logger.info(f"📝 Validando e criando consulta com payload: {dados}")
                 consulta = await ConsultaService().criar_consulta(ConsultaCreate(**dados))
-                logger.info("Consulta criada com sucesso: id=%s", consulta.id)
+                logger.info(f"✅ Consulta criada com sucesso: ID={consulta.id}")
                 schedule_state.set_status(slot_key, "ocupado")
+                logger.info(f"🔒 Slot marcado como ocupado: {slot_key}")
                 await enviar_evento_sse("horario_ocupado", 
                 {
                     "slot": slot_iso,
                     "consulta": consulta.id,
                     "medico_id": dados["medico_id"]
                 })
-                logger.info("✅ Consulta agendada e evento SSE enviado")
+                logger.info(f"📡 Evento SSE enviado: horario_ocupado para slot {slot_iso}")
             except Exception as exc:
-                logger.error("❌ Erro ao agendar consulta: %s", exc, exc_info=True)
+                logger.error(f"❌ Erro ao agendar consulta: {exc}", exc_info=True)
                 schedule_state.set_status(slot_key, "disponivel")
+                logger.info(f"🔓 Slot liberado após erro: {slot_key}")
                 await enviar_evento_sse("horario_disponivel", 
                 {
                     "slot": slot_iso,

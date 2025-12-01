@@ -46,9 +46,15 @@ export const Backup = () => {
     }
   };
 
-  const baixarBackup = (nomeArquivo: string) => {
-    const url = backupApi.getDownloadUrl(nomeArquivo);
-    window.open(url, '_blank');
+  const baixarBackup = async (nomeArquivo: string) => {
+    try {
+      toast.loading('Baixando backup...', { id: 'download' });
+      await backupApi.downloadBackup(nomeArquivo);
+      toast.success('Backup baixado com sucesso!', { id: 'download' });
+    } catch (error) {
+      console.error('Erro ao baixar backup:', error);
+      toast.error('Erro ao baixar backup', { id: 'download' });
+    }
   };
 
   const lastBackup = backups.length > 0 ? backups[0] : null;
