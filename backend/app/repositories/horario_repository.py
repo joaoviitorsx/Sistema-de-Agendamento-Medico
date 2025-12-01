@@ -14,6 +14,12 @@ class HorarioRepository:
         if not file_path.exists():
             file_path.write_text("[]", encoding="utf-8")
 
+    async def listar_todos_horarios(self):
+        from asyncio import to_thread
+        def _list():
+            return [self._serialize(h) for h in self.list_all()]
+        return await to_thread(_list)
+
     async def listar_horarios_medico(self, medico_id: str):
         from asyncio import to_thread
         def _list():

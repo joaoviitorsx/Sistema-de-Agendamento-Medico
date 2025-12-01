@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from app.controllers import consulta_controller, medico_controller, paciente_controller, sistema_controller, backup_controller, report_controller, horario_controller
+from app.controllers import consulta_controller, medico_controller, paciente_controller, sistema_controller, backup_controller, report_controller, horario_controller, agenda_controller
 from app.infra import task_queue
 
 from .core.log import configure_logging
@@ -38,6 +38,7 @@ app.include_router(sistema_controller.router, prefix="/sistema", tags=["Sistema"
 app.include_router(report_controller.router, prefix="/relatorios", tags=["Relatórios"])
 app.include_router(backup_controller.router, prefix="/backup", tags=["Backup"])
 app.include_router(horario_controller.router, prefix="/horarios", tags=["Horários"])
+app.include_router(agenda_controller.router, prefix="/agenda", tags=["Agenda"])
 
 from .seeds.data import seed_initial_consultas
 

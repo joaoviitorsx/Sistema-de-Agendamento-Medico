@@ -13,24 +13,22 @@ def get_paciente_service() -> PacienteService:
     return PacienteService()
 
 
-@router.get("/paciente", response_model=List[PacienteOut])
+@router.get("/", response_model=List[PacienteOut])
 async def listar_pacientes(service: PacienteService = Depends(get_paciente_service)):
     pacientes = await service.listar_pacientes()
     return pacientes  # Pydantic converte a partir do dataclass
 
 
-@router.get("/paciente/{paciente_id}", response_model=PacienteOut)
-async def obter_paciente( paciente_id: str, service: PacienteService = Depends(get_paciente_service)):
+@router.get("/{paciente_id}", response_model=PacienteOut)
+async def obter_paciente(paciente_id: str, service: PacienteService = Depends(get_paciente_service)):
     paciente = await service.obter_paciente(paciente_id)
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente não encontrado")
     return paciente
 
 
-@router.post("/paciente/create", response_model=PacienteOut, status_code=status.HTTP_201_CREATED)
-async def criar_paciente(
-    payload: PacienteCreate, service: PacienteService = Depends(get_paciente_service)
-):
+@router.post("/", response_model=PacienteOut, status_code=status.HTTP_201_CREATED)
+async def criar_paciente(payload: PacienteCreate, service: PacienteService = Depends(get_paciente_service)):
     return await service.criar_paciente(payload)
 
 

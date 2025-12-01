@@ -78,6 +78,6 @@ async def agendar_async(payload: ConsultaCreate):
     return {
         "status": "pendente",
         "task_id": task_id,
-        "slot": slot_key,
+        "slot": payload.inicio.isoformat(),
         "mensagem": "Consulta em processamento."
     }

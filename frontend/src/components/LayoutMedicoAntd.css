@@ -1,0 +1,103 @@
+/* Estilos customizados para a Sidebar Médica */
+
+/* Scrollbar personalizado */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Animações suaves para o menu do Ant Design */
+.ant-menu-dark .ant-menu-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ant-menu-dark .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  transform: translateX(4px);
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-right: 3px solid white;
+  font-weight: 600;
+}
+
+.ant-menu-dark .ant-menu-item-selected::after {
+  border-right: none;
+}
+
+/* Ícones do menu */
+.ant-menu-item .anticon {
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.ant-menu-item:hover .anticon {
+  transform: scale(1.1);
+}
+
+/* Badge de notificações */
+.ant-badge-count {
+  background: linear-gradient(135deg, #C62828 0%, #E53935 100%) !important;
+  box-shadow: 0 2px 8px rgba(198, 40, 40, 0.3);
+}
+
+/* Tooltip */
+.ant-tooltip {
+  font-size: 13px;
+}
+
+.ant-tooltip-inner {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+/* Animação de pulso para o logo */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .ant-layout-sider {
+    position: fixed !important;
+    z-index: 1000;
+  }
+  
+  .ant-layout-sider-collapsed {
+    left: -80px !important;
+  }
+}
+
+/* Efeitos de hover nos cards */
+.hover-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(30, 136, 229, 0.15);
+}

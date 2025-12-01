@@ -1,82 +1,189 @@
-# 🏥 Sistema de Agendamento de Consultas Médicas — Backend (FastAPI)
-### Projeto Integrado com Conceitos de Sistemas Operacionais (SO)
+# 🏥 Sistema de Agendamento de Consultas Médicas
+### Projeto Fullstack Integrado com Conceitos de Sistemas Operacionais (SO)
 
 ---
 
 ## 📌 Visão Geral
 
-Este projeto implementa um **backend completo** para um **Sistema de Agendamento Médico**, utilizando:
+Este projeto implementa um **sistema completo de agendamento médico** com arquitetura fullstack, utilizando:
 
-- **FastAPI (Python 3.12)**
+### 🔷 Backend (FastAPI + Python 3.12)
 - **Arquitetura MVC / Modular**
-- **Persistência utilizando arquivos JSON**
+- **Persistência utilizando arquivos JSON com locks**
 - **Fila de tarefas + worker em thread (concorrência)**
 - **Atualizações em tempo real via SSE (Server-Sent Events)**
-- **Backup automático e manual do sistema**
+- **Backup automático e manual do sistema (ZIP)**
 - **Geração de relatórios em PDF**
-- **Gerenciamento de memória e cache**
-- **Locks e sincronização de arquivos**
-- **Configuração dependente de sistema operacional (Windows/Linux/macOS)**
+- **Sistema de gerenciamento de horários e agenda**
+- **Controle de estado de slots (disponível/reservado/ocupado)**
+- **Logs estruturados com streaming**
 
-O projeto foi desenvolvido com foco em aplicar **conceitos reais de Sistemas Operacionais**, tais como:
+### 🔷 Frontend (React + TypeScript + Vite)
+- **React 18.2** com TypeScript strict mode
+- **Gerenciamento de estado com Zustand**
+- **React Router** para navegação multi-paciente
+- **Ant Design** + componentes customizados
+- **Real-time updates** via SSE (EventSource API)
+- **UI responsiva** com Tailwind CSS
+- **Axios** para comunicação com API
+- **Date-fns** para manipulação de datas
+- **React Hot Toast** para notificações
 
-- Processos e Threads
-- Concorrência e Race Conditions
+### 🔷 Conceitos de Sistemas Operacionais Aplicados
+- Processos e Threads (Worker dedicado)
+- Concorrência e Race Conditions (Locks e sincronização)
 - Escalonamento e Fila Producer/Consumer
-- Sistema de Arquivos
-- Chamadas de Sistema (syscalls)
-- I/O Bound vs CPU Bound
-- Gerência de Memória
-- Sincronização (Locks, Queues)
+- Sistema de Arquivos (JSON persistence com locks)
+- Chamadas de Sistema (syscalls: open, write, read, fsync)
+- I/O Bound vs CPU Bound (PDF/Backup assíncrono)
+- Gerência de Memória (Cache e otimização)
+- Sincronização (RLock, Queue, file locks)
 
 ---
 
 ## 📂 Estrutura de Diretórios
 
 ```text
-backend/
-│── app/
-│   ├── controllers/
-│   │   ├── paciente_controller.py
-│   │   ├── medico_controller.py
-│   │   ├── consulta_controller.py
-│   │   └── sistema_controller.py
-│   │
-│   ├── core/
-│   │   ├── config.py
-│   │   └── logging_config.py
-│   │
-│   ├── infra/
-│   │   ├── file_lock.py
-│   │   ├── file_storage.py
-│   │   ├── schedule_state.py
-│   │   ├── sse_broker.py
-│   │   └── task_queue.py
-│   │
-│   ├── models/
-│   ├── repositories/
-│   ├── schemas/
-│   ├── seeds/
-│   │   └── data.py
-│   │
-│   ├── services/
-│   │   ├── paciente_service.py
-│   │   ├── medico_service.py
-│   │   ├── consulta_service.py
-│   │   ├── task_service.py
-│   │   ├── backup_service.py
-│   │   ├── relatorio_service.py
-│   │   ├── log_service.py
-│   │   └── event_service.py
-│   │
-│   └── main.py
+Sistema-de-Agendamento-Medico/
 │
-├── banco/
-│   ├── pacientes.json
-│   ├── medicos.json
-│   └── consultas.json
+├── backend/
+│   ├── app/
+│   │   ├── controllers/
+│   │   │   ├── agenda_controller.py       ← Gerenciamento de slots e reservas
+│   │   │   ├── backup_controller.py       ← Backup manual do sistema
+│   │   │   ├── consulta_controller.py     ← CRUD de consultas
+│   │   │   ├── horario_controller.py      ← Gerenciamento de horários
+│   │   │   ├── medico_controller.py       ← CRUD de médicos
+│   │   │   ├── paciente_controller.py     ← CRUD de pacientes
+│   │   │   ├── report_controller.py       ← Geração e download de PDFs
+│   │   │   └── sistema_controller.py      ← Logs e SSE streams
+│   │   │
+│   │   ├── core/
+│   │   │   ├── config.py                  ← Configurações globais
+│   │   │   └── log.py                     ← Sistema de logging
+│   │   │
+│   │   ├── infra/
+│   │   │   ├── file_locks.py              ← Lock de arquivos (Windows/Linux)
+│   │   │   ├── file_storage.py            ← Persistência JSON
+│   │   │   ├── schedule_state.py          ← Estado da agenda (RLock)
+│   │   │   ├── sse.py                     ← Broker SSE
+│   │   │   └── task_queue.py              ← Fila de tarefas + worker
+│   │   │
+│   │   ├── models/
+│   │   │   ├── consulta_model.py
+│   │   │   ├── horario_model.py
+│   │   │   ├── medico_model.py
+│   │   │   └── paciente_model.py
+│   │   │
+│   │   ├── repositories/
+│   │   │   ├── consulta_repository.py
+│   │   │   ├── horario_repository.py
+│   │   │   ├── medico_repository.py
+│   │   │   └── paciente_repository.py
+│   │   │
+│   │   ├── schemas/
+│   │   │   ├── consulta_schema.py
+│   │   │   ├── horario_schema.py
+│   │   │   ├── medico_schema.py
+│   │   │   ├── paciente_schema.py
+│   │   │   └── task_schema.py
+│   │   │
+│   │   ├── services/
+│   │   │   ├── backup_service.py          ← Backup ZIP
+│   │   │   ├── consulta_service.py        ← Lógica de consultas
+│   │   │   ├── event_service.py           ← Publicação SSE
+│   │   │   ├── horario_service.py         ← Lógica de horários
+│   │   │   ├── log_service.py             ← Serviço de logs
+│   │   │   ├── medico_service.py          ← Lógica de médicos
+│   │   │   ├── paciente_service.py        ← Lógica de pacientes
+│   │   │   ├── relatorio_service.py       ← Geração de PDF
+│   │   │   └── task_service.py            ← Processamento de tarefas
+│   │   │
+│   │   ├── seeds/
+│   │   │   └── data.py                    ← Dados iniciais
+│   │   │
+│   │   ├── banco/
+│   │   │   ├── consultas.json
+│   │   │   ├── horarios.json
+│   │   │   ├── medicos.json
+│   │   │   └── pacientes.json
+│   │   │
+│   │   ├── logs/                          ← Logs do sistema
+│   │   ├── reports/                       ← PDFs gerados
+│   │   └── main.py                        ← Entry point FastAPI
+│   │
+│   └── requirements.txt
 │
-└── backups/
+└── frontend/
+    ├── src/
+    │   ├── api/
+    │   │   ├── agendaApi.ts               ← Chamadas de agenda/slots
+    │   │   ├── axios.ts                   ← Configuração Axios
+    │   │   ├── consultasApi.ts
+    │   │   ├── horariosApi.ts
+    │   │   ├── logsApi.ts
+    │   │   ├── medicosApi.ts
+    │   │   └── pacientesApi.ts
+    │   │
+    │   ├── components/
+    │   │   ├── domain/
+    │   │   │   ├── SlotSelector.tsx       ← Seletor visual de horários
+    │   │   │   └── SlotSelector.css
+    │   │   └── ui/
+    │   │       ├── Button.tsx
+    │   │       ├── Card.tsx
+    │   │       ├── Input.tsx
+    │   │       ├── Modal.tsx
+    │   │       ├── Select.tsx
+    │   │       └── Table.tsx
+    │   │
+    │   ├── layouts/
+    │   │   ├── LayoutMedico.tsx
+    │   │   └── LayoutPaciente.tsx
+    │   │
+    │   ├── pages/
+    │   │   ├── medico/
+    │   │   │   ├── Backup.tsx
+    │   │   │   ├── Consultas.tsx
+    │   │   │   ├── DashboardMedico.tsx
+    │   │   │   ├── HorarioForm.tsx
+    │   │   │   ├── Horarios.tsx
+    │   │   │   ├── Logs.tsx
+    │   │   │   ├── MedicoForm.tsx
+    │   │   │   ├── Medicos.tsx
+    │   │   │   ├── PacienteForm.tsx
+    │   │   │   ├── Pacientes.tsx
+    │   │   │   └── Relatorios.tsx
+    │   │   └── paciente/
+    │   │       ├── AgendarConsulta.tsx    ← Fluxo de agendamento
+    │   │       ├── ConsultasPaciente.tsx  ← Minhas consultas
+    │   │       └── HomePaciente.tsx
+    │   │
+    │   ├── routes/
+    │   │   └── AppRoutes.tsx              ← Rotas + params dinâmicos
+    │   │
+    │   ├── store/
+    │   │   ├── useAgendaStore.ts          ← State + SSE connection
+    │   │   ├── useConsultaStore.ts
+    │   │   ├── useHorarioStore.ts
+    │   │   ├── useMedicoStore.ts
+    │   │   └── usePacienteStore.ts
+    │   │
+    │   ├── styles/
+    │   │   └── global.css
+    │   │
+    │   ├── theme/
+    │   │   └── antdTheme.ts               ← Tema customizado Ant Design
+    │   │
+    │   ├── types/
+    │   │   └── index.ts                   ← TypeScript types
+    │   │
+    │   └── main.tsx
+    │
+    ├── package.json
+    ├── tsconfig.json
+    ├── vite.config.ts
+    └── tailwind.config.js
 ```
 
 ---

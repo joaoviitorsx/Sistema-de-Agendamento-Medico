@@ -25,8 +25,21 @@ class MedicoService:
 
     async def criar_medico(self, payload: MedicoCreate) -> Medico:
         now = datetime.utcnow()
+        
+        # Gera ID auto-incremental
+        medicos_existentes = await asyncio.to_thread(self.repo.list_all)
+        max_id = 0
+        for m in medicos_existentes:
+            try:
+                mid = int(m.id)
+                if mid > max_id:
+                    max_id = mid
+            except ValueError:
+                continue
+        novo_id = str(max_id + 1)
+        
         medico = Medico(
-            id=str(uuid4()),
+            id=novo_id,
             nome=payload.nome,
             crm=payload.crm,
             especialidade=payload.especialidade,

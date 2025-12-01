@@ -9,6 +9,11 @@ router = APIRouter()
 def get_service() -> HorarioService:
 	return HorarioService()
 
+# Listar todos os horários
+@router.get("/", response_model=List[HorarioOut])
+async def listar_horarios(service: HorarioService = Depends(get_service)):
+	return await service.listar_todos_horarios()
+
 # Listar todos os horários de um médico
 @router.get("/medico/{medico_id}", response_model=List[HorarioOut])
 async def listar_horarios_medico(medico_id: str, service: HorarioService = Depends(get_service)):

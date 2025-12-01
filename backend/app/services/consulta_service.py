@@ -50,9 +50,21 @@ class ConsultaService:
         # validar conflito
         await self._validar_conflito(payload.medico_id, payload.inicio, payload.fim)
 
+        # Gera ID auto-incremental
+        consultas_existentes = await asyncio.to_thread(self.repo.list_all)
+        max_id = 0
+        for c in consultas_existentes:
+            try:
+                cid = int(c.id)
+                if cid > max_id:
+                    max_id = cid
+            except ValueError:
+                continue
+        novo_id = str(max_id + 1)
+
         now = datetime.utcnow()
         consulta = Consulta(
-            id=str(uuid4()),
+            id=novo_id,
             paciente_id=payload.paciente_id,
             medico_id=payload.medico_id,
             inicio=payload.inicio,

@@ -25,8 +25,21 @@ class PacienteService:
 
     async def criar_paciente(self, payload: PacienteCreate) -> Paciente:
         now = datetime.utcnow()
+        
+        # Gera ID auto-incremental
+        pacientes_existentes = await asyncio.to_thread(self.repository.list_all)
+        max_id = 0
+        for p in pacientes_existentes:
+            try:
+                pid = int(p.id)
+                if pid > max_id:
+                    max_id = pid
+            except ValueError:
+                continue
+        novo_id = str(max_id + 1)
+        
         paciente = Paciente(
-            id=str(uuid4()),
+            id=novo_id,
             nome=payload.nome,
             cpf=payload.cpf,
             data_nascimento=payload.data_nascimento,

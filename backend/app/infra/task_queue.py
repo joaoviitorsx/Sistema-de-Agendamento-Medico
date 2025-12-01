@@ -81,12 +81,13 @@ class TaskQueue:
         elif task.tipo == "agendar_consulta":
             dados = task.payload
             slot_key = f"{dados['medico_id']}:{dados['inicio']}"
+            slot_iso = dados.get("inicio")
             try:
                 consulta = await ConsultaService().criar_consulta(ConsultaCreate(**dados))
                 schedule_state.set_status(slot_key, "ocupado")
                 await enviar_evento_sse("horario_ocupado", 
                 {
-                    "slot": slot_key,
+                    "slot": slot_iso,
                     "consulta": consulta.id,
                     "medico_id": dados["medico_id"]
                 })
@@ -94,7 +95,7 @@ class TaskQueue:
                 schedule_state.set_status(slot_key, "disponivel")
                 await enviar_evento_sse("horario_disponivel", 
                 {
-                    "slot": slot_key,
+                    "slot": slot_iso,
                     "medico_id": dados["medico_id"]
                 })
                 logger.error("Erro ao agendar consulta via fila: %s", exc)

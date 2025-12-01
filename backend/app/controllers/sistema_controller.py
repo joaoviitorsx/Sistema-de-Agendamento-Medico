@@ -35,7 +35,7 @@ async def stream_logs():
 @router.get("/agenda/stream")
 async def stream_agenda():
     async def event_stream():
-        queue = sse_broker.subscribe()
+        queue = sse_broker.add_subscriber()
         try:
             while True:
                 msg = await queue.get()
@@ -43,6 +43,6 @@ async def stream_agenda():
         except asyncio.CancelledError:
             pass
         finally:
-            sse_broker.unsubscribe(queue)
+            sse_broker.remove_subscriber(queue)
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
