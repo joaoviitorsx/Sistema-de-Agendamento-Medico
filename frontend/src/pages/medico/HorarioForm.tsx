@@ -48,13 +48,13 @@ function HorarioForm() {
   }, [id, horarios]);
 
   const diasSemana = [
-    'Segunda-feira',
-    'Terça-feira',
-    'Quarta-feira',
-    'Quinta-feira',
-    'Sexta-feira',
-    'Sábado',
-    'Domingo',
+    { value: 'segunda', label: 'Segunda-feira' },
+    { value: 'terca', label: 'Terça-feira' },
+    { value: 'quarta', label: 'Quarta-feira' },
+    { value: 'quinta', label: 'Quinta-feira' },
+    { value: 'sexta', label: 'Sexta-feira' },
+    { value: 'sabado', label: 'Sábado' },
+    { value: 'domingo', label: 'Domingo' },
   ];
 
   const validateForm = () => {
@@ -156,8 +156,8 @@ function HorarioForm() {
               >
                 <option value="">Selecione...</option>
                 {diasSemana.map((dia) => (
-                  <option key={dia} value={dia}>
-                    {dia}
+                  <option key={dia.value} value={dia.value}>
+                    {dia.label}
                   </option>
                 ))}
               </select>
@@ -183,10 +183,10 @@ function HorarioForm() {
           </div>
 
           <div className="form-actions">
-            <Button variant="secondary" onClick={() => navigate('/medico/horarios')}>
+            <Button variant="secondary" type="button" onClick={() => navigate('/medico/horarios')}>
               Cancelar
             </Button>
-            <Button variant="success" loading={loading}>
+            <Button variant="success" htmlType="submit" loading={loading}>
               {id ? 'Salvar Alterações' : 'Cadastrar Horário'}
             </Button>
           </div>

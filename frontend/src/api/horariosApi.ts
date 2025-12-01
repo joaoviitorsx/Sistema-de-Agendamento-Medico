@@ -18,7 +18,7 @@ export const horariosApi = {
   },
 
   create: async (medicoId: string, data: HorarioCreate): Promise<Horario> => {
-    const response = await api.post(`/horarios/${medicoId}`, data);
+    const response = await api.post(`/horarios/medico/${medicoId}`, data);
     return response.data;
   },
 

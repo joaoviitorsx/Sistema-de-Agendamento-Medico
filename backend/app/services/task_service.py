@@ -20,4 +20,5 @@ class TaskService:
         return self.enqueue_task("gerar_relatorio", filtros)
 
     def enqueue_agendamento_consulta(self, dados: Dict[str, Any]) -> str:
+        logger.info("Enfileirando agendamento: %s", dados)
         return self.enqueue_task("agendar_consulta", dados)

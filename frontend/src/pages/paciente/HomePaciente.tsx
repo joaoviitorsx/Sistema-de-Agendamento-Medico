@@ -24,6 +24,8 @@ export const HomePaciente = () => {
         const paciente = await getPaciente(pacienteId);
         if (paciente) {
           setNomePaciente(paciente.nome);
+        } else {
+          setNomePaciente('Paciente');
         }
       }
     };

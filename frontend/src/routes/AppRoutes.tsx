@@ -3,6 +3,7 @@ import { LayoutPaciente } from '@/layouts/LayoutPaciente';
 import { LayoutMedico } from '@/components/LayoutMedicoAntd';
 
 // Páginas Paciente
+import { SelecionarPaciente } from '@/pages/paciente/SelecionarPaciente';
 import { HomePaciente } from '@/pages/paciente/HomePaciente';
 import { AgendarConsulta } from '@/pages/paciente/AgendarConsulta';
 import { ConsultasPaciente } from '@/pages/paciente/ConsultasPaciente';
@@ -22,8 +23,8 @@ export const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redirect raiz para paciente */}
-        <Route path="/" element={<Navigate to="/paciente/1/home" replace />} />
+        {/* Redirect raiz para seleção de paciente */}
+        <Route path="/" element={<SelecionarPaciente />} />
 
         {/* Rotas Paciente */}
         <Route

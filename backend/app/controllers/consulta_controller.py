@@ -65,15 +65,18 @@ async def deletar_consulta(consulta_id: str, service: ConsultaService = Depends(
 async def agendar_async(payload: ConsultaCreate):
     slot_key = f"{payload.medico_id}:{payload.inicio.isoformat()}"
 
-    # Se reservado ou ocupado → erro
-    if schedule_state.get_status(slot_key) != "disponivel":
-        raise HTTPException(409, detail="Horário reservado ou ocupado.")
+    # Aceita tanto "disponivel" quanto "reservado" para agendar
+    # Rejeita apenas se já estiver "ocupado"
+    current_status = schedule_state.get_status(slot_key)
+    if current_status == "ocupado":
+        raise HTTPException(409, detail="Horário já está ocupado.")
 
-    # Marcar como reservado (bloquear para os outros)
-    schedule_state.set_status(slot_key, "reservado")
+    # Marcar como reservado (se ainda não estiver)
+    if current_status == "disponivel":
+        schedule_state.set_status(slot_key, "reservado")
 
-    # Enfileirar a tarefa
-    task_id = TaskService().enqueue_agendamento_consulta(payload.dict())
+    # Enfileirar a tarefa (serializa datetime para string JSON)
+    task_id = TaskService().enqueue_agendamento_consulta(payload.model_dump(mode='json'))
 
     return {
         "status": "pendente",

@@ -86,10 +86,8 @@ async def seed_initial_data():
 
     now = datetime.utcnow()
 
-    # cria 10 pacientes de teste para facilitar testes de concorrência
-    # Usando IDs auto-incrementais simples (1, 2, 3, etc.)
     pacientes = []
-    for i in range(1, 11):
+    for i in range(1, 3):
         pacientes.append(
             Paciente(
                 id=str(i),
@@ -119,10 +117,10 @@ async def seed_initial_medicos():
     medicos = [
         Medico(
             id=str(uuid4()),
-            nome="Dr. João",
+            nome="Dr. Cleber",
             crm="12345-SP",
             especialidade="Cardiologia",
-            email="joao@hospital.com",
+            email="cleber@hospital.com",
             telefone="(11) 98888-1111",
             created_at=now,
             updated_at=now,

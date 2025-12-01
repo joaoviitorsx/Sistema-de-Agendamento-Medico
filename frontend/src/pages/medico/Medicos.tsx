@@ -35,25 +35,26 @@ export const Medicos = () => {
     };
 
     const columns = [
-        { key: 'nome', label: 'Nome' },
-        { key: 'crm', label: 'CRM' },
-        { key: 'especialidade', label: 'Especialidade' },
-        { key: 'email', label: 'E-mail' },
+        { key: 'nome', label: 'Nome', dataIndex: 'nome' },
+        { key: 'crm', label: 'CRM', dataIndex: 'crm' },
+        { key: 'especialidade', label: 'Especialidade', dataIndex: 'especialidade' },
+        { key: 'email', label: 'E-mail', dataIndex: 'email' },
         {
             key: 'actions',
             label: 'Ações',
-            render: (medico: Medico) => (
+            dataIndex: 'id',
+            render: (_: any, record: Medico) => (
                 <div className="table-actions">
                     <button
                         className="action-btn edit"
-                        onClick={() => medico?.id && navigate(`/medico/medicos/editar/${medico.id}`)}
+                        onClick={() => navigate(`/medico/medicos/editar/${record.id}`)}
                         title="Editar"
                     >
                         <Edit size={16} />
                     </button>
                     <button
                         className="action-btn delete"
-                        onClick={() => medico && setDeleteModal(medico)}
+                        onClick={() => setDeleteModal(record)}
                         title="Excluir"
                     >
                         <Trash2 size={16} />

@@ -20,6 +20,16 @@ export const Horarios = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteModal, setDeleteModal] = useState<Horario | null>(null);
 
+  const diasSemanaMap: Record<string, string> = {
+    segunda: 'Segunda-feira',
+    terca: 'Terça-feira',
+    quarta: 'Quarta-feira',
+    quinta: 'Quinta-feira',
+    sexta: 'Sexta-feira',
+    sabado: 'Sábado',
+    domingo: 'Domingo',
+  };
+
   useEffect(() => {
     fetchHorarios();
     fetchMedicos();
@@ -43,48 +53,57 @@ export const Horarios = () => {
     {
       key: 'medico',
       label: 'Médico',
-      render: (horario: Horario) => {
-        if (!horario || !horario.medico_id) return 'N/A';
-        const medico = medicos.find((m) => m.id === horario.medico_id);
+      dataIndex: 'medico_id',
+      render: (_: any, record: Horario) => {
+        if (!record || !record.medico_id) return 'N/A';
+        const medico = medicos.find((m) => m.id === record.medico_id);
         return medico?.nome || 'N/A';
       },
     },
     {
       key: 'especialidade',
       label: 'Especialidade',
-      render: (horario: Horario) => {
-        if (!horario || !horario.medico_id) return 'N/A';
-        const medico = medicos.find((m) => m.id === horario.medico_id);
+      dataIndex: 'medico_id',
+      render: (_: any, record: Horario) => {
+        if (!record || !record.medico_id) return 'N/A';
+        const medico = medicos.find((m) => m.id === record.medico_id);
         return medico?.especialidade || 'N/A';
       },
     },
     {
       key: 'dia_semana',
       label: 'Dia da Semana',
+      dataIndex: 'dia_semana',
+      render: (_: any, record: Horario) => {
+        if (!record || !record.dia_semana) return 'N/A';
+        return diasSemanaMap[record.dia_semana] || record.dia_semana;
+      },
     },
     {
       key: 'horario',
       label: 'Horário',
-      render: (horario: Horario) => {
-        if (!horario || !horario.hora_inicio) return 'N/A';
-        return `${horario.hora_inicio} - ${horario.hora_fim}`;
+      dataIndex: 'hora_inicio',
+      render: (_: any, record: Horario) => {
+        if (!record || !record.hora_inicio) return 'N/A';
+        return `${record.hora_inicio} - ${record.hora_fim}`;
       },
     },
     {
       key: 'actions',
       label: 'Ações',
-      render: (horario: Horario) => (
+      dataIndex: 'id',
+      render: (_: any, record: Horario) => (
         <div className="table-actions">
           <button
             className="action-btn edit"
-            onClick={() => horario?.id && navigate(`/medico/horarios/editar/${horario.id}`)}
+            onClick={() => navigate(`/medico/horarios/editar/${record.id}`)}
             title="Editar"
           >
             <Edit size={16} />
           </button>
           <button
             className="action-btn delete"
-            onClick={() => horario && setDeleteModal(horario)}
+            onClick={() => setDeleteModal(record)}
             title="Excluir"
           >
             <Trash2 size={16} />

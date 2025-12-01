@@ -82,8 +82,11 @@ class TaskQueue:
             dados = task.payload
             slot_key = f"{dados['medico_id']}:{dados['inicio']}"
             slot_iso = dados.get("inicio")
+            logger.info("Iniciando agendamento de consulta: medico=%s, slot=%s", dados['medico_id'], slot_iso)
             try:
+                logger.info("Criando consulta com payload: %s", dados)
                 consulta = await ConsultaService().criar_consulta(ConsultaCreate(**dados))
+                logger.info("Consulta criada com sucesso: id=%s", consulta.id)
                 schedule_state.set_status(slot_key, "ocupado")
                 await enviar_evento_sse("horario_ocupado", 
                 {
@@ -91,7 +94,9 @@ class TaskQueue:
                     "consulta": consulta.id,
                     "medico_id": dados["medico_id"]
                 })
+                logger.info("✅ Consulta agendada e evento SSE enviado")
             except Exception as exc:
+                logger.error("❌ Erro ao agendar consulta: %s", exc, exc_info=True)
                 schedule_state.set_status(slot_key, "disponivel")
                 await enviar_evento_sse("horario_disponivel", 
                 {

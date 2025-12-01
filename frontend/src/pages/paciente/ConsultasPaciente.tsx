@@ -26,42 +26,57 @@ export const ConsultasPaciente = () => {
     {
       key: 'inicio',
       label: 'Data/Hora',
-      render: (consulta: Consulta) =>
-        format(new Date(consulta.inicio), 'dd/MM/yyyy HH:mm'),
+      dataIndex: 'inicio',
+      render: (_: any, record: Consulta) => {
+        if (!record || !record.inicio) return 'N/A';
+        try {
+          return format(new Date(record.inicio), 'dd/MM/yyyy HH:mm');
+        } catch {
+          return 'Data inválida';
+        }
+      },
     },
     {
       key: 'medico_id',
       label: 'Médico',
-      render: (consulta: Consulta) => {
-        const medico = medicos.find((m) => m.id === consulta.medico_id);
-        return medico ? `${medico.nome} - ${medico.especialidade}` : consulta.medico_id;
+      dataIndex: 'medico_id',
+      render: (_: any, record: Consulta) => {
+        if (!record || !record.medico_id) return 'N/A';
+        const medico = medicos.find((m) => m.id === record.medico_id);
+        return medico ? `${medico.nome} - ${medico.especialidade}` : 'Médico não encontrado';
       },
     },
     {
       key: 'status',
       label: 'Status',
-      render: (consulta: Consulta) => (
-        <span
-          style={{
-            padding: '4px 12px',
-            borderRadius: '12px',
-            fontSize: '0.875rem',
-            backgroundColor:
-              consulta.status === 'agendada'
-                ? 'var(--color-success-light)'
-                : consulta.status === 'cancelada'
-                ? 'var(--color-danger-light)'
-                : 'var(--color-gray)',
-            color: 'white',
-          }}
-        >
-          {consulta.status}
-        </span>
-      ),
+      dataIndex: 'status',
+      render: (_: any, record: Consulta) => {
+        if (!record || !record.status) return 'N/A';
+        return (
+          <span
+            style={{
+              padding: '4px 12px',
+              borderRadius: '12px',
+              fontSize: '0.875rem',
+              backgroundColor:
+                record.status === 'agendada'
+                  ? 'var(--color-success-light)'
+                  : record.status === 'cancelada'
+                  ? 'var(--color-danger-light)'
+                  : 'var(--color-gray)',
+              color: 'white',
+            }}
+          >
+            {record.status}
+          </span>
+        );
+      },
     },
     {
       key: 'observacoes',
       label: 'Observações',
+      dataIndex: 'observacoes',
+      render: (_: any, record: Consulta) => record?.observacoes || '-',
     },
   ];
 

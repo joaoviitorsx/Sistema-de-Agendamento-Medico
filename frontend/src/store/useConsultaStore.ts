@@ -105,7 +105,7 @@ export const useConsultaStore = create<ConsultaStore>((set) => ({
     try {
       const response = await consultasApi.agendar(data);
       set({ loading: false });
-      toast.success('Agendamento em processamento...');
+      toast.success('Consulta agendada! Processando...');
       return { task_id: response.task_id, slot: response.slot };
     } catch (error: any) {
       const message = error.response?.data?.detail || 'Erro ao agendar consulta';

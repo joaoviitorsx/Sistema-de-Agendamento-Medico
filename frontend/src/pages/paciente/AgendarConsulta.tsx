@@ -86,18 +86,36 @@ export const AgendarConsulta = () => {
         if (!selectedPaciente || !selectedMedico || !selectedSlot) return;
         setLoading(true);
         try {
+            // Calcula a data de fim (1 hora depois)
+            const inicioDate = new Date(selectedSlot.datetime);
+            const fimDate = new Date(inicioDate.getTime() + 60 * 60 * 1000);
+            
             const result = await agendarConsulta({
                 paciente_id: selectedPaciente,
                 medico_id: selectedMedico,
                 inicio: selectedSlot.datetime,
-                fim: new Date(new Date(selectedSlot.datetime).getTime() + 60 * 60 * 1000).toISOString(),
+                fim: fimDate.toISOString(),
                 observacoes,
             });
             if (result) {
                 // Não libera o slot, pois ele foi confirmado no backend
                 clearSelectedSlot();
+                
+                // Aguarda 1 segundo para o worker processar
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
                 // Redireciona para a lista de consultas
                 navigate(`/paciente/${pacienteId}/consultas`);
+            } else {
+                // Em caso de falha, libera a reserva
+                await liberarSlot(selectedMedico, selectedSlot.datetime);
+                clearSelectedSlot();
+            }
+        } catch (error) {
+            // Em caso de erro, libera a reserva
+            if (selectedSlot) {
+                await liberarSlot(selectedMedico, selectedSlot.datetime);
+                clearSelectedSlot();
             }
         } finally {
             setLoading(false);

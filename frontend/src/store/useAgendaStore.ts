@@ -118,28 +118,29 @@ export const useAgendaStore = create<AgendaStore>((set, get) => ({
       try {
         console.log('📨 SSE Raw Event Data:', event.data);
         
-        // O event.data pode conter múltiplos JSONs concatenados
-        // Precisamos processar apenas o primeiro JSON válido
         const dataStr = event.data.trim();
         
-        // Tenta encontrar o primeiro objeto JSON completo
-        let firstJsonEnd = dataStr.indexOf('}');
-        if (firstJsonEnd === -1) {
-          console.warn('⚠️ No closing brace found in SSE data');
+        // Ignora mensagens que não são JSON (como logs)
+        if (!dataStr.startsWith('{')) {
+          console.log('⏭️ Ignoring non-JSON message:', dataStr);
           return;
         }
         
-        const firstJson = dataStr.substring(0, firstJsonEnd + 1);
-        console.log('🔍 Extracted JSON:', firstJson);
-        
-        const data = JSON.parse(firstJson);
+        // Parse o JSON completo (pode ter objetos aninhados)
+        const data = JSON.parse(dataStr);
         console.log('✅ Parsed SSE Data:', data);
         
         const { tipo, dados } = data;
         
         // Verifica se dados existe e tem as propriedades necessárias
-        if (!dados || !dados.medico_id || !dados.slot) {
+        if (!dados || !dados.medico_id) {
           console.warn('⚠️ Invalid SSE data structure:', data);
+          return;
+        }
+        
+        // Para evento horario_atualizado não precisa de slot
+        if (tipo !== 'horario_atualizado' && !dados.slot) {
+          console.warn('⚠️ Missing slot in SSE data:', data);
           return;
         }
         
@@ -165,6 +166,13 @@ export const useAgendaStore = create<AgendaStore>((set, get) => ({
         }
         
         console.log(`🔄 Processing event type: ${tipo}`);
+        
+        // Se for horario_atualizado, apenas recarrega os slots
+        if (tipo === 'horario_atualizado') {
+          console.log('🔄 Reloading slots due to schedule update');
+          get().fetchSlots();
+          return;
+        }
         
         if (tipo === 'horario_reservado') {
           console.log(`🟡 Setting slot to RESERVADO: ${dados.slot}`);

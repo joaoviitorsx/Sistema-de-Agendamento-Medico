@@ -50,44 +50,49 @@ export const Consultas = () => {
     {
       key: 'paciente',
       label: 'Paciente',
-      render: (consulta: Consulta) => {
-        if (!consulta || !consulta.paciente_id) return 'N/A';
-        const paciente = pacientes.find((p) => p.id === consulta.paciente_id);
+      dataIndex: 'paciente_id',
+      render: (_: any, record: Consulta) => {
+        if (!record || !record.paciente_id) return 'N/A';
+        const paciente = pacientes.find((p) => p.id === record.paciente_id);
         return paciente?.nome || 'N/A';
       },
     },
     {
       key: 'medico',
       label: 'Médico',
-      render: (consulta: Consulta) => {
-        if (!consulta || !consulta.medico_id) return 'N/A';
-        const medico = medicos.find((m) => m.id === consulta.medico_id);
+      dataIndex: 'medico_id',
+      render: (_: any, record: Consulta) => {
+        if (!record || !record.medico_id) return 'N/A';
+        const medico = medicos.find((m) => m.id === record.medico_id);
         return medico?.nome || 'N/A';
       },
     },
     {
       key: 'especialidade',
       label: 'Especialidade',
-      render: (consulta: Consulta) => {
-        if (!consulta || !consulta.medico_id) return 'N/A';
-        const medico = medicos.find((m) => m.id === consulta.medico_id);
+      dataIndex: 'medico_id',
+      render: (_: any, record: Consulta) => {
+        if (!record || !record.medico_id) return 'N/A';
+        const medico = medicos.find((m) => m.id === record.medico_id);
         return medico?.especialidade || 'N/A';
       },
     },
     {
       key: 'inicio',
       label: 'Data/Hora',
-      render: (consulta: Consulta) => {
-        if (!consulta || !consulta.inicio) return 'N/A';
-        return new Date(consulta.inicio).toLocaleString('pt-BR');
+      dataIndex: 'inicio',
+      render: (_: any, record: Consulta) => {
+        if (!record || !record.inicio) return 'N/A';
+        return new Date(record.inicio).toLocaleString('pt-BR');
       },
     },
     {
       key: 'status',
       label: 'Status',
-      render: (consulta: Consulta) => {
-        if (!consulta || !consulta.status) return 'N/A';
-        return getStatusBadge(consulta.status);
+      dataIndex: 'status',
+      render: (_: any, record: Consulta) => {
+        if (!record || !record.status) return 'N/A';
+        return getStatusBadge(record.status);
       },
     },
   ];
